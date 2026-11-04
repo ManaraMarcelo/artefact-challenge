@@ -9,6 +9,7 @@ description = "Customer-service agent prototype for Empório da Música"
 requires-python = ">=3.10"
 dependencies = [
     "anthropic>=2.5",
+    "google-genai>=1.30",
     "pandas>=2.2",
     "pypdf>=5.0",
     "python-dotenv>=1.0",

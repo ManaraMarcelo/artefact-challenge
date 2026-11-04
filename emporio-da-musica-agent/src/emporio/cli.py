@@ -107,20 +107,16 @@ def main(argv: list[str] | None = None) -> int:
             _print_lia(GREETING)
             continue
 
-        try:
-            with console.status("Lia está digitando…", spinner="dots"):
-                result = agent.reply(user_text)
-        except TypeError as exc:
-            if "authentication" not in str(exc):
-                raise
-            console.print("[red]Credencial da Anthropic não encontrada.[/red]")
-            console.print("Crie o arquivo .env com ANTHROPIC_API_KEY=sk-ant-... (veja .env.example) e rode de novo.")
-            return 1
+        with console.status("Lia está digitando…", spinner="dots"):
+            result = agent.reply(user_text)
+        if result.error:
+            console.print(f"[red]Erro do provedor:[/red] [dim]{result.error[:300]}[/dim]")
+            console.print("[dim]Confira a chave e o modelo no arquivo .env (veja .env.example).[/dim]")
         if debug:
             for call in result.tool_calls:
                 _print_tool(call)
             console.print(
-                f"  [dim]tokens: in={result.input_tokens} (cache={result.cache_read_tokens}) out={result.output_tokens}[/dim]"
+                f"  [dim]tokens: in={result.input_tokens} (cache={result.cached_tokens}) out={result.output_tokens}[/dim]"
             )
         _print_lia(result.reply)
 

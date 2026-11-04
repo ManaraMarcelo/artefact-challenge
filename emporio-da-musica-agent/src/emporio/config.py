@@ -19,8 +19,31 @@ POLICIES_PDF = DATA_DIR / "políticas_da_loja.pdf"
 # The store is in Campo Grande/MS, which uses UTC-4 all year round.
 STORE_TZ = ZoneInfo("America/Campo_Grande")
 
-MODEL = os.getenv("EMPORIO_MODEL", "claude-opus-5-5")
-EFFORT = os.getenv("EMPORIO_EFFORT", "low")
+DEFAULT_MODELS = {
+    "gemini": "gemini-2.5-flash",  # available on the Google AI Studio free tier
+    "anthropic": "claude-opus-5-5",
+}
+EFFORT = os.getenv("EMPORIO_EFFORT", "low")  # Anthropic only
+
+
+def gemini_api_key() -> str | None:
+    return os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+
+
+def provider() -> str:
+    """EMPORIO_PROVIDER wins; otherwise pick whichever provider has a key (Gemini first)."""
+    explicit = os.getenv("EMPORIO_PROVIDER")
+    if explicit:
+        return explicit.strip().lower()
+    if gemini_api_key():
+        return "gemini"
+    if os.getenv("ANTHROPIC_API_KEY"):
+        return "anthropic"
+    return "gemini"
+
+
+def default_model(provider_name: str) -> str:
+    return os.getenv("EMPORIO_MODEL") or DEFAULT_MODELS[provider_name]
 
 
 def now() -> datetime:
