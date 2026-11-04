@@ -20,7 +20,7 @@ POLICIES_PDF = DATA_DIR / "políticas_da_loja.pdf"
 STORE_TZ = ZoneInfo("America/Campo_Grande")
 
 DEFAULT_MODELS = {
-    "gemini": "gemini-2.5-flash",  # available on the Google AI Studio free tier
+    "gemini": "gemini-3.5-flash",  # Google AI Studio free tier; stable at the time of writing
     "anthropic": "claude-opus-5-5",
 }
 EFFORT = os.getenv("EMPORIO_EFFORT", "low")  # Anthropic only
