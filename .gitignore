@@ -16,3 +16,6 @@ runtime/
 .DS_Store
 .vscode/
 .idea/
+
+# Challenge statement (not part of the deliverable)
+desafio_tecnico_ai_eng_artefact.pdf
