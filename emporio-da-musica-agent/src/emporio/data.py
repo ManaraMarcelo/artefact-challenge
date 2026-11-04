@@ -145,8 +145,9 @@ class StoreData:
         # --- orders ------------------------------------------------------------------
         orders["order_date"] = pd.to_datetime(orders["order_date"]).dt.date
         orders["estimated_delivery"] = pd.to_datetime(orders["estimated_delivery"]).dt.date
-        orders["tracking_code"] = orders["tracking_code"].where(orders["tracking_code"].notna(), None)
-        orders["notes"] = orders["notes"].where(orders["notes"].notna(), None)
+        # object dtype so missing values become a real None (pandas' string dtype keeps NaN).
+        for col in ("tracking_code", "notes", "payment_method"):
+            orders[col] = orders[col].astype(object).where(orders[col].notna(), None)
 
         return cls(categories, products, promotions, customers, orders, order_items)
 
