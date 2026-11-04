@@ -182,6 +182,9 @@ class EmporioAgent:
             result.reply = ERROR_REPLY
             result.tool_calls.append(ToolCall("api_error", {}, f"{type(exc).__name__}: {exc}", True))
             return result
+        except Exception:
+            del self.messages[start:]
+            raise
 
         self.transcript.append({"role": "user", "text": user_text})
         for call in result.tool_calls:
