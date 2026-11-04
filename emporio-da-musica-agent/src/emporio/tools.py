@@ -286,21 +286,35 @@ class Toolbox:
             df = df[df["final_price"] <= max_price]
         if min_price is not None:
             df = df[df["final_price"] >= min_price]
-        if not include_unavailable:
-            df = df[df["available"]]
-
         if query:
             scores = [self._relevance(int(r.product_id), r.name, query) for r in df.itertuples()]
             df = df.assign(_score=scores)
-            df = df[df["_score"] >= 0.6].sort_values(["_score", "final_price"], ascending=[False, True])
+            # Keep matches close to the best one: asking for "GF-3D" must not return "GF-1R"
+            # (same brand, different model) just because two of three words match.
+            best = df["_score"].max() if not df.empty else 0
+            df = df[df["_score"] >= max(0.6, best - 0.3)].sort_values(["_score", "final_price"], ascending=[False, True])
         else:
             df = df.sort_values("final_price")
+
+        only_unavailable = False
+        if not include_unavailable:
+            available = df[df["available"]]
+            # A customer asking for a specific model that is out of stock should hear that
+            # explicitly (policy 7.3), so fall back to showing the unavailable match.
+            only_unavailable = bool(query) and available.empty and not df.empty
+            if not only_unavailable:
+                df = available
 
         limit = max(1, min(int(limit or 8), 15))
         result: dict[str, Any] = {
             "total_encontrado": int(len(df)),
             "itens": [_summary(r) for _, r in df.head(limit).iterrows()],
         }
+        if only_unavailable:
+            result["observacao"] = (
+                "Só há correspondência com itens indisponíveis. Informe o status e ofereça alternativas "
+                "(get_product_details traz alternativas disponíveis)."
+            )
         if len(df) > limit:
             result["observacao"] = f"Mostrando {limit} de {len(df)}. Refine a busca se necessário."
         if df.empty:
