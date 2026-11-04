@@ -28,12 +28,19 @@ def tokenize(text: str, drop_stopwords: bool = True) -> list[str]:
     return tokens
 
 
+# Longest first. Covers plurals, -mento/-ção nominalisations and infinitives.
+_SUFFIXES = (
+    "amentos", "amento", "imentos", "imento", "acoes", "acao", "icoes", "icao",
+    "ados", "adas", "ado", "ada", "oes", "aes", "ao", "ar", "er", "ir", "es", "s",
+)
+
+
 def stem(token: str) -> str:
     """Very light Portuguese stemmer, enough to match singular/plural forms.
 
-    violões/violão -> viol, guitarras -> guitarr, teclados -> teclad.
+    violões/violão -> viol, guitarras -> guitarr, parcelar/parcelamento -> parcel.
     """
-    for suffix in ("oes", "aes", "ao", "es", "s"):
+    for suffix in _SUFFIXES:
         if token.endswith(suffix) and len(token) - len(suffix) >= 3:
             return token[: -len(suffix)]
     return token
