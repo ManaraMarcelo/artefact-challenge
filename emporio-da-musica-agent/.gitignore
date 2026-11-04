@@ -6,13 +6,13 @@ venv/
 .pytest_cache/
 *.egg-info/
 
-# Segredos
+# Secrets
 .env
 
-# Estado de runtime (histórico de conversas e tickets gerados localmente)
+# Runtime state (local conversation history and handoff tickets)
 runtime/
 
-# SO / IDE
+# OS / IDE
 .DS_Store
 .vscode/
 .idea/
