@@ -1,5 +1,8 @@
 <div align="center">
 
+<a href="README.md"><img src="https://img.shields.io/badge/PT--BR-Portugu%C3%AAs-FF5A4F?style=for-the-badge" alt="Português (atual)"></a>
+<a href="README.en.md"><img src="https://img.shields.io/badge/EN-Read_in_English-111316?style=for-the-badge" alt="Read in English"></a>
+
 <img src="docs/assets/demo.gif" alt="A Lia, assistente da Empório da Música, consultando o catálogo e respondendo o preço do Takamine GD20 na interface web" width="880">
 
 # Empório da Música · Lia
@@ -58,7 +61,7 @@ Conversas completas em [`examples/`](examples/), com cada ferramenta consultada 
 |---|---|
 | 🚀 [Como rodar](#-como-rodar) | 🧪 [**Roteiro de validação**](#-roteiro-de-validação-para-avaliadores) |
 | 🧭 [Arquitetura](#-arquitetura) | 🧠 [Decisões técnicas](#-decisões-técnicas) |
-| 🛡️ [Segurança e guardrails](#️-segurança-e-guardrails) | 🎨 [Interface web](#-interface-web) |
+| 🔒 [Segurança e guardrails](#-segurança-e-guardrails) | 🎨 [Interface web](#-interface-web) |
 | 🧹 [Dados e inconsistências](#-tratamento-dos-dados-e-inconsistências-encontradas) | 📌 [Suposições](#-suposições) |
 | ✅ [Testes, avaliação e exemplos](#-qualidade-testes-avaliação-e-exemplos) | 🚧 [Limitações e próximos passos](#-limitações-conhecidas-e-próximos-passos) |
 | 🤖 [Uso de assistentes de código](#-uso-de-assistentes-de-código) | |
@@ -282,7 +285,7 @@ Cada conversa é salva em `runtime/conversations/<sessão>.json`, com o históri
 
 ---
 
-## 🛡️ Segurança e guardrails
+## 🔒 Segurança e guardrails
 
 O prompt diz ao modelo como se comportar. Os guardrails (`guardrails.py`) são a camada que **não depende de o modelo obedecer**. São checagens locais e determinísticas, todas cobertas por testes.
 
