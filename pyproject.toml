@@ -20,6 +20,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+# Only to re-record the README GIF (uses the locally installed Google Chrome).
+demo = ["playwright>=1.45", "pillow>=10.0"]
 
 [project.scripts]
 emporio-chat = "emporio.cli:main"
