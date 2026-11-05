@@ -26,8 +26,24 @@ DEFAULT_MODELS = {
 EFFORT = os.getenv("EMPORIO_EFFORT", "low")  # Anthropic only
 
 
+def gemini_api_keys() -> list[str]:
+    """All configured Gemini keys, in order: GEMINI_API_KEY, GEMINI_API_KEY_2, _3, ...
+
+    The free tier quota is per Google Cloud *project*, so extra keys only help when they
+    were created in different projects.
+    """
+    keys = [os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")]
+    keys += [os.getenv(f"GEMINI_API_KEY_{i}") for i in range(2, 10)]
+    unique: list[str] = []
+    for key in keys:
+        if key and key.strip() and key.strip() not in unique:
+            unique.append(key.strip())
+    return unique
+
+
 def gemini_api_key() -> str | None:
-    return os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    keys = gemini_api_keys()
+    return keys[0] if keys else None
 
 
 def provider() -> str:
