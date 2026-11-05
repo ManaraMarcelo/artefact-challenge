@@ -18,6 +18,10 @@ from typing import Protocol
 from . import config
 
 
+# Keys that already hit their daily quota in this process (shared by all agent instances).
+_EXHAUSTED_KEYS: set[str | None] = set()
+
+
 class LLMError(Exception):
     """Provider-agnostic failure (network, quota, invalid request...)."""
 
@@ -69,8 +73,13 @@ class GeminiBackend:
         self._types = types
         self._errors = __import__("google.genai.errors", fromlist=["APIError"])
         self.model = model
-        api_key = config.gemini_api_key()
-        self.client = genai.Client(api_key=api_key) if api_key else genai.Client()
+        # Several keys (from different Google Cloud projects) can be configured; when one
+        # hits its free-tier *daily* quota we move on to the next one.
+        keys = config.gemini_api_keys()
+        self._keys = keys or [None]
+        self._clients = [genai.Client(api_key=k) if k else genai.Client() for k in self._keys]
+        self._key_index = next((i for i, k in enumerate(self._keys) if k not in _EXHAUSTED_KEYS), 0)
+        self.client = self._clients[self._key_index]
         declarations = []
         for t in tools:
             schema = t["input_schema"]
@@ -90,20 +99,34 @@ class GeminiBackend:
         t = self._types
         self.contents.append(t.Content(role="user", parts=[t.Part(text=b) for b in blocks]))
 
+    def _rotate_key(self) -> bool:
+        """Mark the current key as exhausted for today and switch to the next unused one."""
+        _EXHAUSTED_KEYS.add(self._keys[self._key_index])
+        for i, key in enumerate(self._keys):
+            if key not in _EXHAUSTED_KEYS:
+                self._key_index, self.client = i, self._clients[i]
+                return True
+        return False
+
     def _call(self):
-        for attempt, delay in enumerate((0, *self.RETRY_DELAYS)):
-            if delay:
-                time.sleep(delay)
+        attempt = 0
+        while True:
             try:
                 return self.client.models.generate_content(model=self.model, contents=self.contents, config=self.config)
             except self._errors.APIError as exc:
-                retryable = exc.code in (429, 500, 503)
-                if not retryable or attempt == len(self.RETRY_DELAYS):
+                # A per-day quota will not recover by waiting: try the next key, if any.
+                if exc.code == 429 and "PerDay" in str(exc):
+                    if self._rotate_key():
+                        continue
+                    raise LLMError(f"Gemini {exc.code} (cota diária esgotada em todas as chaves): {exc}") from exc
+                # Per-minute limits and overloads are transient: back off and retry.
+                if exc.code not in (429, 500, 503) or attempt == len(self.RETRY_DELAYS):
                     raise LLMError(f"Gemini {exc.code}: {exc}") from exc
             except Exception as exc:  # network errors
                 if attempt == len(self.RETRY_DELAYS):
                     raise LLMError(f"Gemini: {exc}") from exc
-        raise LLMError("Gemini: retries exhausted")  # pragma: no cover
+            time.sleep(self.RETRY_DELAYS[attempt])
+            attempt += 1
 
     def generate(self) -> ModelStep:
         response = self._call()
