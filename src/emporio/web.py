@@ -13,6 +13,7 @@ LLM call never blocks the event loop.
 from __future__ import annotations
 
 import argparse
+import logging
 import threading
 import uuid
 from pathlib import Path
@@ -28,6 +29,7 @@ from .agent import EmporioAgent
 from .policies import store_status
 
 STATIC_DIR = Path(__file__).parent / "static"
+log = logging.getLogger("emporio.web")
 MAX_SESSIONS = 200
 
 # How each tool is shown to the customer: (label, kind). `kind` drives the chip colour.
@@ -107,6 +109,8 @@ def create_app(agent_factory: Callable[[str], EmporioAgent] | None = None) -> Fa
             raise HTTPException(status_code=503, detail=f"Agente indisponível: {exc}") from exc
         with session.lock:
             result = session.agent.reply(body.message)
+        if result.error:  # surfaced in the server terminal (quota, outage...), never to the customer
+            log.warning("Erro do provedor na sessão %s: %s", sid, result.error[:300])
         chips = [
             ToolChip(
                 name=call.name,
