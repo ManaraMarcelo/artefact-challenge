@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Lia · Empório da Música</title>
+  <meta name="description" content="Assistente virtual da Empório da Música: preços, estoque, pedidos e políticas da loja.">
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/app.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%23FF5A4F'/%3E%3Cpath d='M38 14v24.5a8 8 0 1 1-4-6.9V22l-10 3v17.5a8 8 0 1 1-4-6.9V18z' fill='white'/%3E%3C/svg%3E">
+</head>
+<body>
+  <!-- decorative brand pattern -->
+  <svg class="squiggle squiggle--a" viewBox="0 0 220 160" aria-hidden="true"><path d="M10 140c40-10 30-80 80-90s70 60 40 80-60-40 0-70 80 10 80 10"/></svg>
+  <svg class="squiggle squiggle--b" viewBox="0 0 200 120" aria-hidden="true"><path d="M10 20c30 0 40 40 70 40s30-40 60-30 40 60 50 70"/></svg>
+  <span class="dot dot--blue" aria-hidden="true"></span>
+  <span class="dot dot--coral" aria-hidden="true"></span>
+  <span class="dot dot--yellow" aria-hidden="true"></span>
+
+  <div class="app">
+    <!-- ============ left: brand + Lia ============ -->
+    <aside class="hero">
+      <header class="brand">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 64 64"><rect width="64" height="64" rx="18"/><path d="M38 14v24.5a8 8 0 1 1-4-6.9V22l-10 3v17.5a8 8 0 1 1-4-6.9V18z"/></svg>
+        </span>
+        <span class="brand__text">
+          <strong>Empório da Música</strong>
+          <small>Sua música <em>começa</em> aqui.</small>
+        </span>
+      </header>
+
+      <div class="stage">
+        <div class="sticker sticker--lime">Instrumentos &gt; Música</div>
+        <div class="sticker sticker--blue">Desde 2008 ✦</div>
+        <div class="sticker sticker--coral">Campo Grande · MS</div>
+        <span class="sparkle sparkle--lime" aria-hidden="true"></span>
+        <span class="sparkle sparkle--yellow" aria-hidden="true"></span>
+
+        <div class="orb orb--xl" id="heroOrb" data-state="idle" aria-hidden="true">
+          <div class="orb__body">
+            <div class="orb__eyes"><span class="orb__eye"></span><span class="orb__eye"></span></div>
+            <span class="orb__mouth"></span>
+          </div>
+          <div class="orb__shadow"></div>
+        </div>
+      </div>
+
+      <div class="intro">
+        <h1>Oi, eu sou a <span>Lia</span>.</h1>
+        <p>Consulto preços, estoque, promoções e o status do seu pedido em tempo real, e explico as políticas da loja.</p>
+        <p class="status" id="storeStatus"><span class="status__dot"></span><span>Verificando horário…</span></p>
+      </div>
+
+      <div class="suggestions" id="suggestions">
+        <button type="button" data-q="Quais violões vocês têm até R$ 1.000?">🎸 Violões até R$ 1.000</button>
+        <button type="button" data-q="Quanto custa o Takamine GD20?">💰 Preço do Takamine GD20</button>
+        <button type="button" data-q="Tem alguma promoção rolando?">🏷️ Promoções</button>
+        <button type="button" data-q="Qual o horário e o endereço da loja?">📍 Horário e endereço</button>
+        <button type="button" data-q="Me arrependi da compra, posso devolver meu pedido?">↩️ Trocas e devoluções</button>
+      </div>
+    </aside>
+
+    <!-- ============ right: chat ============ -->
+    <main class="chat" aria-label="Conversa com a Lia">
+      <header class="chat__head">
+        <div class="orb orb--sm" id="headOrb" data-state="idle" aria-hidden="true">
+          <div class="orb__body"><div class="orb__eyes"><span class="orb__eye"></span><span class="orb__eye"></span></div><span class="orb__mouth"></span></div>
+        </div>
+        <div class="chat__who">
+          <strong>Lia</strong>
+          <span id="liaState">online · assistente virtual</span>
+        </div>
+        <button type="button" class="ghost" id="resetBtn" title="Começar uma nova conversa">Nova conversa</button>
+      </header>
+
+      <section class="messages" id="messages" aria-live="polite"></section>
+
+      <form class="composer" id="composer" autocomplete="off">
+        <textarea id="input" rows="1" maxlength="1500" placeholder="Escreva sua mensagem…" aria-label="Mensagem"></textarea>
+        <button type="submit" class="send" id="sendBtn" aria-label="Enviar">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h13M12 5l7 7-7 7"/></svg>
+        </button>
+      </form>
+      <p class="footnote">A Lia é uma assistente virtual e pode errar. Para casos especiais, ela encaminha para a equipe.</p>
+    </main>
+  </div>
+
+  <template id="tplLia">
+    <article class="msg msg--lia">
+      <div class="orb orb--xs" data-state="idle" aria-hidden="true">
+        <div class="orb__body"><div class="orb__eyes"><span class="orb__eye"></span><span class="orb__eye"></span></div><span class="orb__mouth"></span></div>
+      </div>
+      <div class="msg__col">
+        <div class="msg__chips"></div>
+        <div class="bubble"></div>
+      </div>
+    </article>
+  </template>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
