@@ -30,6 +30,7 @@ from .data import (
     get_store,
     only_digits,
 )
+from .guardrails import validate_tool_args
 from .policies import search_policies
 from .text import normalize, stem, tokenize
 
@@ -232,8 +233,13 @@ class Toolbox:
         handler = self._handlers.get(name)
         if handler is None:
             return json.dumps({"erro": f"Ferramenta desconhecida: {name}"}), True
+        # Never trust model-produced arguments: validate against the tool schema first.
+        schema = next(d["input_schema"] for d in self.definitions if d["name"] == name)
+        args, problems = validate_tool_args(schema, args or {})
+        if problems:
+            return json.dumps({"erro": "Argumentos inválidos: " + "; ".join(problems)}, ensure_ascii=False), True
         try:
-            result = handler(**(args or {}))
+            result = handler(**args)
             return json.dumps(result, ensure_ascii=False, default=str), False
         except TypeError as exc:  # bad/missing arguments from the model
             return json.dumps({"erro": f"Argumentos inválidos: {exc}"}, ensure_ascii=False), True
