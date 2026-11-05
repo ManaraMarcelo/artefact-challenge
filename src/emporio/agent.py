@@ -4,7 +4,8 @@ Why a hand-written loop instead of a framework (LangChain, LlamaIndex, CrewAI...
 The whole agent is one model + six tools. A short loop keeps every decision visible
 (what is sent, which tool ran, what came back), makes the tool trace easy to log and
 show in the examples, and has no abstraction to fight when debugging. Provider
-specifics live in `llm.py`; this module only orchestrates.
+specifics live in `llm.py`; deterministic safety checks live in `guardrails.py`;
+this module only orchestrates.
 """
 
 from __future__ import annotations
@@ -16,8 +17,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
-from . import config
+from . import config, guardrails
 from .llm import ChatBackend, LLMError, make_backend
+from .policies import get_index
 from .prompts import build_system_prompt, turn_context
 from .tools import Toolbox
 
@@ -50,6 +52,15 @@ class TurnResult:
     output_tokens: int = 0
     cached_tokens: int = 0
     error: str | None = None
+    events: list[str] = field(default_factory=list)  # guardrail events, for logs/debug/UI
+
+
+def _policy_values() -> set[float]:
+    """Every R$ amount written in the policy manual (free-shipping threshold, fees...)."""
+    values: set[float] = set()
+    for chunk in get_index().chunks:
+        values |= guardrails.brl_values(chunk.text)
+    return values
 
 
 class EmporioAgent:
@@ -62,6 +73,7 @@ class EmporioAgent:
         clock: Callable[[], datetime] = config.now,
         session_id: str | None = None,
         history_dir: Path | None = config.RUNTIME_DIR / "conversations",
+        rate_limiter: guardrails.RateLimiter | None = None,
     ):
         self.toolbox = toolbox or Toolbox()
         self.clock = clock
@@ -69,7 +81,11 @@ class EmporioAgent:
         self.backend = backend or make_backend(system, self.toolbox.definitions, provider=provider, model=model)
         self.session_id = session_id or datetime.now().strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:6]
         self.history_dir = history_dir
-        self.transcript: list[dict] = []  # human-readable log: user / tool / assistant entries
+        self.rate_limiter = rate_limiter or guardrails.RateLimiter()
+        self.transcript: list[dict] = []  # human-readable log (PII masked)
+        # Prices the agent is allowed to quote: policy manual + anything a tool returned
+        # or the customer wrote in this conversation.
+        self.grounded_prices: set[float] = _policy_values()
         if history_dir:
             self._load()
 
@@ -93,6 +109,7 @@ class EmporioAgent:
                 )
             self.backend.load(data["messages"])
             self.transcript = data.get("transcript", [])
+            self.grounded_prices |= {float(v) for v in data.get("grounded_prices", [])}
 
     def _save(self) -> None:
         path = self.history_path
@@ -105,18 +122,48 @@ class EmporioAgent:
             "model": self.backend.model,
             "updated_at": datetime.now().isoformat(timespec="seconds"),
             "transcript": self.transcript,
+            "grounded_prices": sorted(self.grounded_prices),
             "messages": self.backend.dump(),  # native provider format, replayable as-is
         }
         path.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
 
+    def _record(self, user_text: str, result: TurnResult) -> None:
+        mask = guardrails.mask_pii
+        self.transcript.append({"role": "user", "text": mask(user_text)})
+        for call in result.tool_calls:
+            self.transcript.append(
+                {
+                    "role": "tool",
+                    "name": call.name,
+                    "input": json.loads(mask(json.dumps(call.input, ensure_ascii=False))),
+                    "output": mask(call.output),
+                    "is_error": call.is_error,
+                }
+            )
+        if result.events:
+            self.transcript.append({"role": "guardrail", "events": result.events})
+        self.transcript.append({"role": "assistant", "text": result.reply})
+        self._save()
+
     # ------------------------------------------------------------------ main loop
     def reply(self, user_text: str) -> TurnResult:
+        check = guardrails.check_input(user_text, self.rate_limiter)
+        result = TurnResult(reply="", events=list(check.events))
+        if check.blocked_reply:
+            result.reply = check.blocked_reply
+            self._record(user_text, result)
+            return result
+
+        self.grounded_prices |= guardrails.brl_values(check.text)
         checkpoint = self.backend.checkpoint()
         # Volatile context (date/time, open/closed) rides along with the user turn, so the
         # system prompt stays static and cacheable.
-        self.backend.add_user_message([turn_context(self.clock()), user_text])
-        result = TurnResult(reply="")
+        blocks = [turn_context(self.clock())]
+        if check.injection_suspected:
+            blocks.append(guardrails.INJECTION_REMINDER)
+        self.backend.add_user_message([*blocks, check.text])
 
+        corrected = False
         try:
             for _ in range(MAX_TOOL_ROUNDS):
                 step = self.backend.generate()
@@ -126,20 +173,40 @@ class EmporioAgent:
 
                 if step.refused:
                     result.reply = REFUSAL_REPLY
+                    result.events.append("model_refusal")
                     self.backend.add_assistant_text(REFUSAL_REPLY)
                     break
+
                 if not step.tool_requests:
-                    result.reply = step.text or EMPTY_REPLY
+                    reply = step.text or EMPTY_REPLY
+                    out = guardrails.check_output(reply, self.grounded_prices)
+                    if out.ok:
+                        result.reply = reply
+                        break
+                    if not corrected:
+                        # One corrective round: tell the model what failed and let it fix it.
+                        corrected = True
+                        result.events.append(
+                            f"output_retry:prices={out.ungrounded_prices},leak={out.leaked_markers}"
+                        )
+                        self.backend.add_user_message([out.correction()])
+                        continue
+                    result.events.append("output_blocked")
+                    result.reply = guardrails.SAFE_FALLBACK
+                    self.backend.add_assistant_text(guardrails.SAFE_FALLBACK)
                     break
 
                 outputs = []
                 for req in step.tool_requests:
                     output, is_error = self.toolbox.execute(req.name, req.input)
                     result.tool_calls.append(ToolCall(req.name, req.input, output, is_error))
+                    if not is_error:
+                        self.grounded_prices |= guardrails.brl_values(output)
                     outputs.append((req, output, is_error))
                 self.backend.add_tool_results(outputs)
             else:
                 result.reply = ERROR_REPLY
+                result.events.append("max_tool_rounds")
                 self.backend.add_assistant_text(ERROR_REPLY)
         except LLMError as exc:
             # Roll back this turn so the stored history stays valid for the next request.
@@ -151,11 +218,5 @@ class EmporioAgent:
             self.backend.rollback(checkpoint)
             raise
 
-        self.transcript.append({"role": "user", "text": user_text})
-        for call in result.tool_calls:
-            self.transcript.append(
-                {"role": "tool", "name": call.name, "input": call.input, "output": call.output, "is_error": call.is_error}
-            )
-        self.transcript.append({"role": "assistant", "text": result.reply})
-        self._save()
+        self._record(user_text, result)
         return result

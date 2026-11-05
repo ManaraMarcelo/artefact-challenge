@@ -115,6 +115,8 @@ def main(argv: list[str] | None = None) -> int:
         if debug:
             for call in result.tool_calls:
                 _print_tool(call)
+            for event in result.events:
+                console.print(f"  [yellow]🛡  {event}[/yellow]")
             console.print(
                 f"  [dim]tokens: in={result.input_tokens} (cache={result.cached_tokens}) out={result.output_tokens}[/dim]"
             )
