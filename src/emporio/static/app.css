@@ -1,0 +1,276 @@
+/* Empório da Música · Lia — visual language: coral / sky / lime / yellow / charcoal / soft white,
+   rounded geometry, sticker accents, hand-drawn squiggles. */
+
+:root {
+  --coral: #FF5A4F;
+  --coral-soft: #FFE9E7;
+  --sky: #4DA8FF;
+  --sky-soft: #E6F2FF;
+  --lime: #AEEA00;
+  --lime-soft: #F1FBD6;
+  --yellow: #FFC83D;
+  --yellow-soft: #FFF5D9;
+  --ink: #111316;
+  --ink-2: #5B6170;
+  --ink-3: #9AA0AC;
+  --line: #E9EBEF;
+  --soft: #F7F8FA;
+  --card: #FFFFFF;
+  --radius-lg: 28px;
+  --radius: 18px;
+  --shadow: 0 1px 2px rgba(17, 19, 22, .04), 0 12px 40px -12px rgba(17, 19, 22, .12);
+  --font: "Satoshi", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: var(--font);
+  color: var(--ink);
+  background: var(--soft);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+button, textarea { font: inherit; color: inherit; }
+
+/* ---------------------------------------------------------------- decoration */
+.squiggle { position: fixed; fill: none; stroke-width: 3; stroke-linecap: round; pointer-events: none; z-index: 0; }
+.squiggle--a { width: 160px; left: -40px; bottom: -10px; stroke: var(--sky); opacity: .55; }
+.squiggle--b { width: 200px; right: 24px; top: 18px; stroke: var(--coral); opacity: .5; }
+.dot { position: fixed; border-radius: 50%; z-index: 0; pointer-events: none; }
+.dot--blue { width: 14px; height: 14px; background: var(--sky); top: 12%; left: 44%; }
+.dot--coral { width: 10px; height: 10px; background: var(--coral); opacity: .6; bottom: 14%; left: 38%; }
+.dot--yellow { width: 18px; height: 6px; border-radius: 4px; background: var(--yellow); top: 70%; left: 4%; transform: rotate(-25deg); }
+
+/* ---------------------------------------------------------------- layout */
+.app {
+  position: relative; z-index: 1;
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(340px, 0.9fr) minmax(0, 1.25fr);
+  gap: 32px;
+  padding: 28px clamp(16px, 3vw, 40px);
+  max-width: 1360px;
+  margin: 0 auto;
+}
+
+/* ---------------------------------------------------------------- hero */
+.hero { display: flex; flex-direction: column; gap: 22px; min-height: 0; min-width: 0; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand__mark svg { width: 46px; height: 46px; display: block; filter: drop-shadow(0 6px 14px rgba(255, 90, 79, .35)); }
+.brand__mark rect { fill: var(--coral); }
+.brand__mark path { fill: #fff; }
+.brand__text { display: flex; flex-direction: column; line-height: 1.1; }
+.brand__text strong { font-size: 22px; font-weight: 900; letter-spacing: -.02em; }
+.brand__text small { font-size: 14px; color: var(--ink-2); font-weight: 500; }
+.brand__text em { font-style: normal; color: var(--coral); }
+
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 250px;
+  display: grid;
+  place-items: center;
+}
+.sticker {
+  position: absolute;
+  font-weight: 700; font-size: 15px;
+  padding: 9px 16px; border-radius: 999px;
+  box-shadow: 0 8px 20px -8px rgba(17, 19, 22, .25);
+  animation: drift 7s ease-in-out infinite;
+  user-select: none;
+}
+.sticker--lime { background: var(--lime); color: var(--ink); top: 8%; left: 2%; transform: rotate(-6deg); }
+.sticker--blue { background: var(--sky); color: #fff; bottom: 12%; left: 6%; transform: rotate(-10deg); animation-delay: -2s; }
+.sticker--coral { background: var(--coral); color: #fff; top: 22%; right: 0; transform: rotate(9deg); animation-delay: -4s; }
+@keyframes drift { 50% { translate: 0 -6px; } }
+.sparkle { position: absolute; width: 22px; height: 22px; clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); }
+.sparkle--lime { background: var(--lime); right: 14%; bottom: 18%; animation: twinkle 2.8s ease-in-out infinite; }
+.sparkle--yellow { background: var(--yellow); left: 22%; top: 40%; width: 14px; height: 14px; animation: twinkle 3.4s ease-in-out infinite -1s; }
+@keyframes twinkle { 50% { transform: scale(.6) rotate(45deg); opacity: .6; } }
+
+.intro h1 { margin: 0 0 6px; font-size: clamp(30px, 3.2vw, 42px); font-weight: 900; letter-spacing: -.03em; line-height: 1.05; }
+.intro h1 span { color: var(--coral); }
+.intro p { margin: 0; color: var(--ink-2); font-size: 16px; line-height: 1.5; max-width: 46ch; }
+.status {
+  display: inline-flex !important; align-items: center; gap: 8px;
+  margin-top: 14px !important;
+  padding: 7px 14px; border-radius: 999px;
+  background: var(--card); box-shadow: var(--shadow);
+  font-size: 14px !important; font-weight: 500; color: var(--ink) !important;
+}
+.status__dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ink-3); }
+.status.is-open .status__dot { background: #7BC300; box-shadow: 0 0 0 4px var(--lime-soft); }
+.status.is-closed .status__dot { background: var(--coral); box-shadow: 0 0 0 4px var(--coral-soft); }
+
+.suggestions { display: flex; flex-wrap: wrap; gap: 8px; }
+.suggestions button {
+  border: 1px solid var(--line); background: var(--card);
+  padding: 9px 14px; border-radius: 999px; cursor: pointer;
+  font-size: 14px; font-weight: 500;
+  transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.suggestions button:hover { transform: translateY(-2px) rotate(-1deg); border-color: var(--ink); box-shadow: var(--shadow); }
+.suggestions button:disabled { opacity: .5; cursor: default; transform: none; }
+
+/* ---------------------------------------------------------------- chat card */
+.chat {
+  min-height: 0; min-width: 0;
+  display: flex; flex-direction: column;
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.chat__head { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+.chat__who { display: flex; flex-direction: column; line-height: 1.2; flex: 1; }
+.chat__who strong { font-size: 17px; font-weight: 700; }
+.chat__who span { font-size: 13px; color: var(--ink-2); }
+.ghost {
+  border: 1px solid var(--line); background: transparent; cursor: pointer;
+  padding: 8px 14px; border-radius: 999px; font-size: 14px; font-weight: 500;
+}
+.ghost:hover { border-color: var(--ink); }
+
+.messages { flex: 1; overflow-y: auto; padding: 24px 20px 8px; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth; }
+.msg { display: flex; gap: 10px; max-width: 86%; animation: pop .28s cubic-bezier(.2, .9, .3, 1.3); }
+@keyframes pop { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+.msg--user { align-self: flex-end; }
+.msg--user .bubble { background: var(--ink); color: #fff; border-bottom-right-radius: 6px; }
+.msg--lia { align-self: flex-start; }
+.msg--lia .bubble { background: var(--soft); border-bottom-left-radius: 6px; }
+.msg__col { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.bubble { padding: 12px 16px; border-radius: var(--radius); font-size: 15.5px; line-height: 1.55; overflow-wrap: anywhere; }
+.bubble p { margin: 0 0 8px; } .bubble p:last-child { margin: 0; }
+.bubble ul { margin: 4px 0 8px; padding-left: 20px; } .bubble li { margin: 2px 0; }
+.bubble strong { font-weight: 700; }
+.msg--lia .bubble strong { color: var(--ink); background: linear-gradient(transparent 62%, var(--yellow-soft) 62%); }
+.bubble.is-error { background: var(--coral-soft); }
+.caret::after { content: ""; display: inline-block; width: 2px; height: 1em; background: var(--coral); margin-left: 2px; vertical-align: -2px; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* tool chips = "what Lia consulted" */
+.msg__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; font-weight: 700; letter-spacing: .01em;
+  padding: 4px 10px; border-radius: 999px; cursor: help;
+  animation: pop .3s cubic-bezier(.2, .9, .3, 1.3) both;
+}
+.chip svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.chip--catalog { background: var(--sky-soft); color: #1F6FCC; }
+.chip--promo { background: var(--coral-soft); color: #D93A30; }
+.chip--order { background: var(--yellow-soft); color: #9A6B00; }
+.chip--policy { background: var(--lime-soft); color: #4E7A00; }
+.chip--human { background: var(--ink); color: #fff; }
+.chip--guard { background: #EFEAFF; color: #5B3FD6; }
+.chip--fail { text-decoration: line-through; opacity: .6; }
+
+/* thinking bubble */
+.thinking { display: inline-flex; gap: 5px; padding: 14px 16px; }
+.thinking i { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-3); animation: bounce 1s infinite ease-in-out; }
+.thinking i:nth-child(2) { animation-delay: .15s; } .thinking i:nth-child(3) { animation-delay: .3s; }
+@keyframes bounce { 40% { transform: translateY(-5px); background: var(--coral); } }
+
+/* composer */
+.composer { display: flex; align-items: flex-end; gap: 10px; margin: 8px 16px 6px; padding: 8px 8px 8px 18px; border: 1.5px solid var(--line); border-radius: 26px; background: var(--card); transition: border-color .15s; }
+.composer:focus-within { border-color: var(--ink); }
+.composer textarea { flex: 1; border: 0; outline: 0; resize: none; background: transparent; font-size: 15.5px; line-height: 1.45; padding: 8px 0; max-height: 140px; }
+.send { flex: none; width: 42px; height: 42px; border: 0; border-radius: 50%; background: var(--coral); cursor: pointer; display: grid; place-items: center; transition: transform .15s, background .15s; box-shadow: 0 8px 18px -8px rgba(255, 90, 79, .8); }
+.send svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.send:hover { transform: scale(1.06) rotate(-8deg); }
+.send:disabled { background: var(--ink-3); box-shadow: none; cursor: default; transform: none; }
+.footnote { margin: 0 0 12px; text-align: center; font-size: 12px; color: var(--ink-3); }
+
+/* ================================================================ Lia orb
+   An original character: a glossy sky→lime sphere with pill eyes.
+   States (data-state): idle · thinking · talking · happy · error            */
+.orb { --size: 48px; --lx: 0px; --ly: 0px; position: relative; width: var(--size); height: var(--size); flex: none; }
+.orb--xl { --size: clamp(150px, 15vw, 200px); }
+.orb--sm { --size: 40px; }
+.orb--xs { --size: 30px; margin-top: 2px; }
+.orb__body {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: linear-gradient(140deg, #4DA8FF 0%, #2FC6C9 52%, #AEEA00 118%);
+  box-shadow: inset calc(var(--size) * -.08) calc(var(--size) * -.1) calc(var(--size) * .2) rgba(17, 19, 22, .08),
+              0 0 calc(var(--size) * .35) rgba(77, 168, 255, .35);
+  display: grid; place-items: center;
+  animation: float 3.6s ease-in-out infinite;
+  transition: filter .4s ease;
+}
+.orb__body::before { /* glossy highlight */
+  content: ""; position: absolute; width: 38%; height: 24%; left: 18%; top: 12%;
+  border-radius: 50%; background: rgba(255, 255, 255, .35); filter: blur(calc(var(--size) * .03)); transform: rotate(-25deg);
+}
+.orb__eyes { display: flex; gap: calc(var(--size) * .16); transform: translate(var(--lx), var(--ly)); transition: transform .25s ease-out; margin-top: -4%; }
+.orb__eye {
+  width: calc(var(--size) * .085); height: calc(var(--size) * .2);
+  background: #fff; border-radius: 999px;
+  box-shadow: 0 0 calc(var(--size) * .06) rgba(255, 255, 255, .9);
+  transform-origin: center; animation: blinkEye 4.2s infinite;
+}
+.orb__mouth {
+  position: absolute; left: 50%; top: 66%; width: calc(var(--size) * .14); height: calc(var(--size) * .05);
+  translate: -50% 0; background: rgba(255, 255, 255, .9); border-radius: 999px; opacity: 0; transition: opacity .2s;
+}
+.orb__shadow {
+  position: absolute; left: 50%; bottom: calc(var(--size) * -.16); width: 70%; height: 12%;
+  translate: -50% 0; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(47, 198, 201, .55), transparent);
+  filter: blur(4px); animation: shadow 3.6s ease-in-out infinite;
+}
+.orb--sm .orb__body, .orb--xs .orb__body { animation-duration: 4.4s; }
+@keyframes float { 50% { transform: translateY(calc(var(--size) * -.06)); } }
+@keyframes shadow { 50% { transform: scaleX(.8); opacity: .6; } }
+@keyframes blinkEye { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+
+/* thinking: eyes look around, body pulses */
+.orb[data-state="thinking"] .orb__eyes { animation: lookAround 1.6s ease-in-out infinite; }
+.orb[data-state="thinking"] .orb__body { animation: float 3.6s ease-in-out infinite, pulse 1.2s ease-in-out infinite; }
+@keyframes lookAround {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(calc(var(--size) * -.08), calc(var(--size) * -.04)); }
+  55% { transform: translate(calc(var(--size) * .08), calc(var(--size) * -.04)); }
+  80% { transform: translate(0, calc(var(--size) * .03)); }
+}
+@keyframes pulse { 50% { filter: brightness(1.12) saturate(1.15); } }
+
+/* talking: happy squint + moving mouth */
+.orb[data-state="talking"] .orb__eye { animation: none; transform: scaleY(.55); border-radius: 999px 999px 40% 40%; }
+.orb[data-state="talking"] .orb__mouth { opacity: 1; animation: talk .22s ease-in-out infinite alternate; }
+@keyframes talk { to { height: calc(var(--size) * .11); width: calc(var(--size) * .12); } }
+
+/* happy: little hop on greeting */
+.orb[data-state="happy"] .orb__body { animation: hop .7s cubic-bezier(.3, 1.6, .5, 1) 1; }
+.orb[data-state="happy"] .orb__eye { animation: none; transform: scaleY(.45); }
+@keyframes hop { 40% { transform: translateY(calc(var(--size) * -.18)) scale(1.03, .97); } 70% { transform: translateY(0) scale(.97, 1.03); } }
+
+/* error: flat eyes, desaturated */
+.orb[data-state="error"] .orb__body { filter: grayscale(.6) brightness(.95); }
+.orb[data-state="error"] .orb__eye { animation: none; transform: scaleY(.18); }
+
+/* ---------------------------------------------------------------- responsive */
+@media (max-width: 960px) {
+  body { overflow: auto; }
+  .app { grid-template-columns: minmax(0, 1fr); height: auto; min-height: 100%; gap: 16px; padding: 16px; }
+  .hero { gap: 14px; }
+  .stage { min-height: 170px; }
+  .orb--xl { --size: 120px; }
+  .sticker { font-size: 12px; padding: 6px 11px; }
+  .sticker--lime { top: 0; left: 0; }
+  .sticker--blue { top: auto; bottom: 4%; left: 0; }
+  .sticker--coral { top: auto; bottom: 10%; right: 0; }
+  .intro h1 { font-size: 28px; }
+  .chat { height: 78vh; min-height: 480px; }
+  .msg { max-width: 94%; }
+  .squiggle, .dot { display: none; }
+  .suggestions { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  .suggestions button { flex: none; }
+  .chat__head { padding: 12px 14px; }
+  .composer { margin: 8px 10px 6px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
